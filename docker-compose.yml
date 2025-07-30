@@ -1,0 +1,39 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: wisper_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: customer_db
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppass
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./normalized_customers.sql:/docker-entrypoint-initdb.d/normalized_customers.sql:ro
+    ports:
+      - "3306:3306"
+
+  php-backend:
+    build:
+      context: ./Back_End
+      dockerfile: ../Dockerfile.backend
+    ports:
+      - "8000:80"
+    volumes:
+      - ./Back_End:/var/www/html
+    depends_on:
+      - mysql
+
+  vue-frontend:
+    build:
+      context: ./Front_End
+      dockerfile: ../Dockerfile.frontend
+    ports:
+      - "5173:5173"
+    command: npx vite
+    depends_on:
+      - php-backend
+
+volumes:
+  db_data:
